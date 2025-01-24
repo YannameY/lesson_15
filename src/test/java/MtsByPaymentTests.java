@@ -9,7 +9,7 @@ import org.openqa.selenium.chrome.ChromeDriver; // Импортируем Chrome
 import org.openqa.selenium.support.ui.ExpectedConditions; // Импортируем условия ожидания для элементов
 import org.openqa.selenium.support.ui.WebDriverWait; // Импортируем класс для ожидания
 
-import java.time.Duration; // Импортируем Duration для задания времени ожидания
+import java.time.Duration; // Импортируем Duration для времени ожидания
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING) // порядок выполнения тестов
 public class MtsByPaymentTests {
