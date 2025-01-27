@@ -1,119 +1,92 @@
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.FixMethodOrder;
 import org.junit.Test;
-import org.junit.runners.MethodSorters;
-import org.openqa.selenium.*; // Импортируем необходимые классы из Selenium
-import org.openqa.selenium.chrome.ChromeDriver; // Импортируем ChromeDriver для работы с браузером Chrome
-import org.openqa.selenium.support.ui.ExpectedConditions; // Импортируем условия ожидания для элементов
-import org.openqa.selenium.support.ui.WebDriverWait; // Импортируем класс для ожидания
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
-import java.time.Duration; // Импортируем Duration для времени ожидания
+import java.time.Duration;
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING) // порядок выполнения тестов
 public class MtsByPaymentTests {
-    private static WebDriver driver; // Создаем объект WebDriver
+    private static WebDriver driver;
 
     @BeforeClass
     public static void setUp() {
-        System.setProperty("webdriver.chrome.driver", "/Users/Yan/Downloads/chromedriver/chromedriver.exe"); // Указываем путь к драйверу
+        System.setProperty("webdriver.chrome.driver", "/Users/Yan/Downloads/chromedriver/chromedriver.exe");
         driver = new ChromeDriver();
-        driver.get("https://www.mts.by"); // Переходим на сайт MTS
-
-        closeCookieConsent();  // Закрываем куки здесь, если это необходимо
+        driver.get("https://www.mts.by");
+        closeCookieConsent();
     }
 
     private static void closeCookieConsent() {
-        // Закрываем всплывающее окно с куки
         try {
-            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-            WebElement cookieButton = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("cookie-agree")));
-            cookieButton.click(); // Кликаем на кнопку
-        } catch (Exception e) { // Игнорируем исключения, если кнопка не найдена
-
+            WebElement cookieButton = new WebDriverWait(driver, Duration.ofSeconds(10))
+                    .until(ExpectedConditions.visibilityOfElementLocated(By.id("cookie-agree")));
+            cookieButton.click();
+        } catch (Exception e) {
+            
         }
     }
 
-    @Test // Тест для проверки заголовка блока
+    @Test
     public void testBlockTitle() {
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(20)); // Ожидание 20 секунд
-        WebElement blockTitle = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//div[@class='pay__wrapper']//h2"))); // Ищем заголовок блока по XPath
-        String text = blockTitle.getText(); // Получаем текст заголовка
-        Assert.assertNotNull("Блок 'Онлайн пополнение' не найден.", text); // Проверяем, что текст не null
-        Assert.assertEquals("Заголовок блока неверен", "Онлайн пополнение\n" + "без комиссии", text); // Сравниваем с ожидаемым текстом
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(20));
+        WebElement blockTitle = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//div[@class='pay__wrapper']//h2")));
+        String text = blockTitle.getText();
+        Assert.assertNotNull("Блок 'Онлайн пополнение' не найден.", text);
+        Assert.assertEquals("Заголовок блока неверен", "Онлайн пополнение\nбез комиссии", text);
     }
 
-
-    @Test // Тест для проверки логотипов платежных систем
+    @Test
     public void testPaymentSystemLogos() {
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30)); // Ожидание 30 секунд
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30));
+        String[] expectedAlts = {"Visa", "Verified By Visa", "MasterCard", "MasterCard Secure Code", "Белкарт"};
 
-        // Массив для хранения alt-атрибутов
-        String[] expectedAlts = {
-                "Visa",
-                "Verified By Visa",
-                "MasterCard",
-                "MasterCard Secure Code",
-                "Белкарт"
-        };
-
-        // Проходим по каждому alt-значению и проверяем его наличие
         for (String alt : expectedAlts) {
-            try {
-                // Используем XPath
-                WebElement logo = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//div[@class='pay__partners']//img[@alt='" + alt + "']")));
-                Assert.assertTrue("Логотип " + alt + " не отображается.", logo.isDisplayed()); // Проверяем, отображается ли логотип
-
-
-                String logoSrc = logo.getAttribute("src"); // Получаем логотипа
-                System.out.println("Логотип " + alt + " найден, URL: " + logoSrc);
-            } catch (TimeoutException e) {
-                System.out.println("Логотип " + alt + " не найден.");
-                e.printStackTrace(); // Печатаем стек исключения
-            }
+            checkLogo(wait, alt);
         }
-
-
     }
 
-    @Test // Тест для проверки кнопки "Продолжить"
+    private void checkLogo(WebDriverWait wait, String alt) {
+        try {
+            WebElement logo = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//div[@class='pay__partners']//img[@alt='" + alt + "']")));
+            Assert.assertTrue("Логотип " + alt + " не отображается.", logo.isDisplayed());
+            String logoSrc = logo.getAttribute("src");
+            System.out.println("Логотип " + alt + " найден, URL: " + logoSrc);
+        } catch (Exception e) {
+            System.out.println("Логотип " + alt + " не найден.");
+        }
+    }
+
+    @Test
     public void testContinueButton() {
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30));
+        driver.findElement(By.xpath("//option[text()='Услуги связи']")).click();
+        driver.findElement(By.id("connection-phone")).sendKeys("297777777");
+        driver.findElement(By.id("connection-sum")).sendKeys("100");
+        driver.findElement(By.id("connection-email")).sendKeys("test@example.com");
 
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30)); // Ожидание 30 секунд
-
-        JavascriptExecutor js = (JavascriptExecutor) driver; // Создаем объект для выполнения JavaScript
-
-
-        // Выбор опции из выпадающего списка
-        driver.findElement(By.xpath("//option[text()='Услуги связи']")).click(); // Кликаем на опцию "Услуги связи"
-
-        driver.findElement(By.id("connection-phone")).sendKeys("297777777"); // Вводим номер телефона
-        driver.findElement(By.id("connection-sum")).sendKeys("100"); // Вводим сумму пополнения
-        driver.findElement(By.id("connection-email")).sendKeys("test@example.com"); // Вводим email
-
-        WebElement continueButton = driver.findElement(By.cssSelector("button.button__default")); // Ищем по CSS-селектору
-        js.executeScript("arguments[0].click();", continueButton); // Кликаем с помощью JavaScript
-
-
+        WebElement continueButton = driver.findElement(By.cssSelector("button.button__default"));
+        continueButton.click();
     }
 
-    @Test // Тест для проверки ссылки "Подробнее о сервисе"
+    @Test
     public void testLearnMoreLink() {
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(20)); // Ожидание 20 секунд
-        WebElement learnMoreLink = wait.until(ExpectedConditions.elementToBeClickable(By.linkText("Подробнее о сервисе")));  // Ищем ссылку "Подробнее о сервисе"
-        learnMoreLink.click(); // Кликаем на ссылку
-        Assert.assertTrue("Ссылка 'Подробнее о сервисе' не работает.", driver.getCurrentUrl().contains("https://www.mts.by/help/poryadok-oplaty-i-bezopasnost-internet-platezhey/"));  // Проверяем ожидаемую часть
-        driver.navigate().back(); // Возвращаемся на предыдущую страницу
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(20));
+        WebElement learnMoreLink = wait.until(ExpectedConditions.elementToBeClickable(By.linkText("Подробнее о сервисе")));
+        learnMoreLink.click();
+        Assert.assertTrue("Ссылка 'Подробнее о сервисе' не работает.", driver.getCurrentUrl().contains("https://www.mts.by/help/poryadok-oplaty-i-bezopasnost-internet-platezhey/"));
+        driver.navigate().back();
     }
 
     @AfterClass
     public static void tearDown() {
         if (driver != null) {
-            driver.quit(); // Закрываем драйвер
+            driver.quit();
         }
     }
 }
-
-
-
